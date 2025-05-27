@@ -1,11 +1,93 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
+import '../styles/global.css';
+import { addScore, getScores, setGameDuration, getGameTime, getShotClock, startGame, stopGame, resetGame, startShotClock, stopShotClock, getMatchHistory, clearMatchHistory } from '../scripts/scoreboard.ts';
 
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+const { red, blue } = getScores();
+const gameTime = getGameTime();
+const shotClock = getShotClock();
+const matchHistory = getMatchHistory();
 ---
 
-<Layout>
-	<Welcome />
-</Layout>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ABU Robocon 2025 Scoreboard</title>
+</head>
+<body class="bg-gray-100 font-sans">
+  <div class="container mx-auto p-4">
+    <h1 class="text-3xl font-bold text-center mb-6">ABU Robocon 2025 Scoreboard</h1>
+    
+    <!-- Timer Controls -->
+    <div class="flex justify-center mb-6">
+      <div class="text-center">
+        <h2 class="text-xl font-semibold">Game Timer: <span id="game-timer">{gameTime}</span>s</h2>
+        <h3 class="text-lg">Shot Clock: <span id="shot-clock">{shotClock}</span>s</h3>
+        <div class="mt-2">
+          <button id="start-game" class="bg-green-500 text-white px-4 py-2 rounded mr-2">Start Game</button>
+          <button id="stop-game" class="bg-red-500 text-white px-4 py-2 rounded mr-2">Stop Game</button>
+          <button id="reset-game" class="bg-gray-500 text-white px-4 py-2 rounded">Reset Game</button>
+        </div>
+        <div class="mt-2">
+          <button id="start-shot" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Start Shot Clock</button>
+          <button id="stop-shot" class="bg-orange-500 text-white px-4 py-2 rounded">Stop Shot Clock</button>
+        </div>
+        <div class="mt-2">
+          <select id="game-duration" class="border p-2 rounded">
+            <option value="120">Preliminary (120s)</option>
+            <option value="160">Knockout (160s)</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <!-- Team Scores -->
+    <div class="flex justify-between">
+      <!-- Red Team -->
+      <div class="bg-robocon-red text-white p-6 rounded-lg w-5/12">
+        <h2 class="text-2xl font-bold mb-4">Red Team</h2>
+        <p class="text-xl mb-4">Score: <span id="red-score">{red}</span></p>
+        <button class="bg-white text-robocon-red px-4 py-2 rounded mr-2" data-team="red" data-points="2">+2</button>
+        <button class="bg-white text-robocon-red px-4 py-2 rounded mr-2" data-team="red" data-points="3">+3</button>
+        <button class="bg-white text-robocon-red px-4 py-2 rounded" data-team="red" data-points="7">+7</button>
+      </div>
+      
+      <!-- Blue Team -->
+      <div class="bg-robocon-blue text-white p-6 rounded-lg w-5/12">
+        <h2 class="text-2xl font-bold mb-4">Blue Team</h2>
+        <p class="text-xl mb-4">Score: <span id="blue-score">{blue}</span></p>
+        <button class="bg-white text-robocon-blue px-4 py-2 rounded mr-2" data-team="blue" data-points="2">+2</button>
+        <button class="bg-white text-robocon-blue px-4 py-2 rounded mr-2" data-team="blue" data-points="3">+3</button>
+        <button class="bg-white text-robocon-blue px-4 py-2 rounded" data-team="blue" data-points="7">+7</button>
+      </div>
+    </div>
+
+    <!-- Match History -->
+    <div class="mt-8">
+      <h2 class="text-2xl font-bold mb-4">Match History</h2>
+      <table class="w-full border-collapse border">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="border p-2">Timestamp</th>
+            <th class="border p-2">Red Score</th>
+            <th class="border p-2">Blue Score</th>
+          </tr>
+        </thead>
+        <tbody id="match-history">
+          {matchHistory.map(record => (
+            <tr>
+              <td class="border p-2">{new Date(record.timestamp).toLocaleString()}</td>
+              <td class="border p-2">{record.redScore}</td>
+              <td class="border p-2">{record.blueScore}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <button id="clear-history" class="bg-red-500 text-white px-4 py-2 rounded mt-4">Clear History</button>
+    </div>
+  </div>
+</div>
+<script type="module" src="/scripts/client.js"></script>
+</body>
+</html>
