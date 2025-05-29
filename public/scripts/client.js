@@ -5,6 +5,8 @@ import {
   getHalfCourt, 
 } from '../../src/scripts/scoreboard.ts';
 
+// import { saveMatchHistoryToDatabase } from '../../src/scripts/database.ts';
+
 // Format time with milliseconds (MM:SS.mmm)
 function splitTime(seconds) {
   const minutes = Math.floor(seconds / 60);
