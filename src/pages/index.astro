@@ -1,6 +1,6 @@
 ---
 import '../styles/global.css';
-import { addScore, getScores, setGameDuration, getGameTime, getShotClock, startGame, stopGame, resetGame, startShotClock, stopShotClock, resetShotClock, getMatchHistory, clearMatchHistory, getTeamNames } from '../scripts/scoreboard.ts';
+import { addScore, getScores, setGameDuration, getGameTime, getShotClock, getHalfCourt, startGame, stopGame, resetGame, startShotClock, stopShotClock, resetShotClock, getMatchHistory, clearMatchHistory, getTeamNames } from '../scripts/scoreboard.ts';
 
 // Format time with milliseconds
 function splitTime(seconds: number): { mmss: string; ms: string } {
@@ -16,6 +16,7 @@ function splitTime(seconds: number): { mmss: string; ms: string } {
 const { red, blue } = getScores();
 const gameTime = getGameTime();
 const shotClock = getShotClock();
+const halfCourt = getHalfCourt();
 const { redTeamName, blueTeamName } = getTeamNames();
 const matchHistory = getMatchHistory();
 ---
@@ -102,6 +103,11 @@ const matchHistory = getMatchHistory();
           <p class="text-5xl font-orbitron text-center mb-2">
             <span style="margin-right: 0ch;" class="timer-fixed" id="shot-clock-mmss">{splitTime(shotClock).mmss}</span>
             <span style="margin-right: 1ch;" class="timer-ms" id="shot-clock-ms">{splitTime(shotClock).ms}</span>
+          </p>
+          <h3 class="text-1xl mt-4 mb-2 text-center" id="shot-clock-label">8s Half Court:</h3>
+          <p class="text-3xl font-orbitron text-center mb-2">
+            <span style="margin-right: 0ch;" class="timer-fixed" id="half-court-clock-mmss">{splitTime(halfCourt).mmss}</span>
+            <span style="margin-right: 1ch;" class="timer-ms" id="half-court-clock-ms">{splitTime(halfCourt).ms}</span>
           </p>
         </div>
       </div>

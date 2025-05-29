@@ -1,7 +1,8 @@
 import {
   addScore, getScores, setGameDuration, getGameTime, getShotClock,
   startGame, stopGame, resetGame, startShotClock, stopShotClock, resetShotClock,
-  getMatchHistory, clearMatchHistory, getTeamNames, setTeamName, setShotClock
+  getMatchHistory, clearMatchHistory, getTeamNames, setTeamName, setShotClock,
+  getHalfCourt, 
 } from '../../src/scripts/scoreboard.ts';
 
 // Format time with milliseconds (MM:SS.mmm)
@@ -23,15 +24,36 @@ let reconfiguring = false;
 let reconfigTimer = null;
 let shotClockRunning = false;
 
+// Prepare the shot clock audio
+const shotclockAudio = new Audio('src/assets/Shotclock.mp3');
+
 function updateTimers() {
   const gameTime = getGameTime();
   const shotClock = getShotClock();
+  const halfCourt = getHalfCourt();
   const gameSplit = splitTime(gameTime);
   const shotSplit = splitTime(shotClock);
+  const halfCourtSplit = splitTime(halfCourt);
   document.getElementById('game-timer-mmss').textContent = gameSplit.mmss;
   document.getElementById('game-timer-ms').textContent = gameSplit.ms;
   document.getElementById('shot-clock-mmss').textContent = shotSplit.mmss;
   document.getElementById('shot-clock-ms').textContent = shotSplit.ms;
+  document.getElementById('half-court-clock-mmss').textContent = halfCourtSplit.mmss;
+  document.getElementById('half-court-clock-ms').textContent = halfCourtSplit.ms;
+
+  // Play audio if needed
+  checkHalfCourtAudio();
+}
+
+function checkHalfCourtAudio() {
+  if (getHalfCourt() === 0 && !window.__shotclockPlayed) {
+    shotclockAudio.currentTime = 0;
+    shotclockAudio.play();
+    window.__shotclockPlayed = true;
+  }
+  if (getHalfCourt() > 0) {
+    window.__shotclockPlayed = false;
+  }
 }
 
 function lockGameDuration(lock) {
@@ -213,6 +235,7 @@ window.addEventListener('DOMContentLoaded', () => {
       lockGameDuration(true);
       endedBy = null;
       startBothTimers();
+      updateToggleShotButton();
     } else {
       stopGame();
       stopShotClock();

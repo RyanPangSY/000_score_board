@@ -12,6 +12,7 @@ let redScore: number = 0;
 let blueScore: number = 0;
 let gameTime: number = 120; // Default to preliminary round (120s)
 let shotClock: number = 20; // 20s per possession
+let halfCourt: number = 8;
 let redTeamName: string = 'Lebron James'; // Default team name
 let blueTeamName: string = 'Michael Jordan'; // Default team name
 let isGameRunning: boolean = false;
@@ -51,6 +52,10 @@ export function getGameTime(): number {
 
 export function getShotClock(): number {
   return shotClock;
+}
+
+export function getHalfCourt(): number {
+  return halfCourt;
 }
 
 export function getTeamNames(): { redTeamName: string; blueTeamName: string } {
@@ -116,6 +121,11 @@ export function startShotClock(): void {
     shotClockInterval = setInterval(() => {
       if (shotClock > 0) {
         shotClock = Math.max(0, shotClock - 0.01); // Decrement by 10ms
+        halfCourt = Math.max(0, shotClock - 12); // Update halfCourt based on shotClock
+        // if (halfCourt == 0 && !clockTriggered) {
+          
+        //   clockTriggered = true; // Reset clockTriggered when halfCourt reaches 0
+        // }
       } else {
         stopShotClock();
         // Do NOT reset or restart shot clock automatically here
@@ -137,6 +147,7 @@ export function stopShotClock(): void {
 
 export function resetShotClock(): void {
   shotClock = 20;
+  halfCourt = 8; // Reset halfCourt to default
 }
 
 // Allow direct shotClock override for reconfiguration
