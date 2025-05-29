@@ -1,10 +1,22 @@
 ---
 import '../styles/global.css';
-import { addScore, getScores, setGameDuration, getGameTime, getShotClock, startGame, stopGame, resetGame, startShotClock, stopShotClock, getMatchHistory, clearMatchHistory } from '../scripts/scoreboard.ts';
+import { addScore, getScores, setGameDuration, getGameTime, getShotClock, startGame, stopGame, resetGame, startShotClock, stopShotClock, resetShotClock, getMatchHistory, clearMatchHistory, getTeamNames } from '../scripts/scoreboard.ts';
+
+// Format time with milliseconds
+function splitTime(seconds: number): { mmss: string; ms: string } {
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  const millis = Math.floor((seconds % 1) * 1000);
+  return {
+    mmss: `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`,
+    ms: `.${millis.toString().padStart(3, '0')}`,
+  };
+}
 
 const { red, blue } = getScores();
 const gameTime = getGameTime();
 const shotClock = getShotClock();
+const { redTeamName, blueTeamName } = getTeamNames();
 const matchHistory = getMatchHistory();
 ---
 
@@ -13,81 +25,167 @@ const matchHistory = getMatchHistory();
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ABU Robocon 2025 Scoreboard</title>
+  <title>Scoreboard</title>
+  <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <style>
+    body, .font-montserrat {
+      font-family: 'Montserrat', Arial, sans-serif;
+    }
+    .timer-fixed {
+      display: inline-block;
+      min-width: 6ch;
+      text-align: right;
+      letter-spacing: 0.05em;
+      /* Shift left for visual center alignment */
+      margin-right: 1.5ch;
+    }
+    .timer-ms {
+      display: inline-block;
+      min-width: 4ch;
+      text-align: left;
+      font-variant-numeric: tabular-nums;
+    }
+    .font-orbitron {
+      font-family: 'Orbitron', monospace, sans-serif;
+    }
+    .disabled {
+      opacity: 0.5;
+      pointer-events: none;
+    }
+    .team-title {
+      font-weight: bold;
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .score-big {
+      font-weight: bold;
+      font-size: 4.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .team-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 2rem 1rem;
+    }
+    .score-controls {
+      margin-top: 1.5rem;
+      display: flex;
+      gap: 1rem;
+      justify-content: center;
+    }
+    .team-select {
+      margin-bottom: 0.5rem;
+    }
+    @media (min-width: 768px) {
+      .team-section {
+        padding: 2.5rem 2rem;
+      }
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans">
+<body class="bg-gray-900 text-white font-montserrat">
   <div class="container mx-auto p-4">
-    <h1 class="text-3xl font-bold text-center mb-6">ABU Robocon 2025 Scoreboard</h1>
-    
-    <!-- Timer Controls -->
-    <div class="flex justify-center mb-6">
-      <div class="text-center">
-        <h2 class="text-xl font-semibold">Game Timer: <span id="game-timer">{gameTime}</span>s</h2>
-        <h3 class="text-lg">Shot Clock: <span id="shot-clock">{shotClock}</span>s</h3>
-        <div class="mt-2">
-          <button id="start-game" class="bg-green-500 text-white px-4 py-2 rounded mr-2">Start Game</button>
-          <button id="stop-game" class="bg-red-500 text-white px-4 py-2 rounded mr-2">Stop Game</button>
-          <button id="reset-game" class="bg-gray-500 text-white px-4 py-2 rounded">Reset Game</button>
+    <h1 class="text-4xl text-center mb-8">Scoreboard</h1>
+
+    <!-- Upper part: Timers and controls -->
+    <div class="w-full mb-10 flex flex-col items-center">
+      <div class="flex flex-col items-center gap-2">
+        <h2 class="text-1xl mb-0">Game Timer:</h2>
+        <div class="flex flex-col items-center">
+          <p id="game-timer" class="text-6xl font-orbitron font-normal mb-2 text-center">
+            <span style="margin-right: 0ch;" class="timer-fixed" id="game-timer-mmss">{splitTime(gameTime).mmss}</span>
+            <span style="margin-right: 1ch;" class="timer-ms" id="game-timer-ms">{splitTime(gameTime).ms}</span>
+          </p>
+          <h3 class="text-1xl mt-4 mb-2 text-center" id="shot-clock-label">Shot Clock:</h3>
+          <p class="text-5xl font-orbitron text-center mb-2">
+            <span style="margin-right: 0ch;" class="timer-fixed" id="shot-clock-mmss">{splitTime(shotClock).mmss}</span>
+            <span style="margin-right: 1ch;" class="timer-ms" id="shot-clock-ms">{splitTime(shotClock).ms}</span>
+          </p>
         </div>
-        <div class="mt-2">
-          <button id="start-shot" class="bg-blue-500 text-white px-4 py-2 rounded mr-2">Start Shot Clock</button>
-          <button id="stop-shot" class="bg-orange-500 text-white px-4 py-2 rounded">Stop Shot Clock</button>
-        </div>
-        <div class="mt-2">
-          <select id="game-duration" class="border p-2 rounded">
-            <option value="120">Preliminary (120s)</option>
-            <option value="160">Knockout (160s)</option>
-          </select>
-        </div>
+      </div>
+      <div class="mt-4 flex flex-wrap justify-center gap-3">
+        <button id="toggle-game"
+          class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">
+          Start Game
+        </button>
+        <button id="reset-game" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Reset Game</button>
+        <button id="toggle-shot" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Start Shot Clock</button>
+        <button id="reset-shot" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Reset Shot Clock</button>
+      </div>
+      <div class="mt-4">
+        <select id="game-duration" class="bg-gray-800 text-white p-2 rounded">
+          <option value="120">Preliminary (120s)</option>
+          <option value="160">Knockout (160s)</option>
+        </select>
       </div>
     </div>
 
-    <!-- Team Scores -->
-    <div class="flex justify-between">
-      <!-- Red Team -->
-      <div class="bg-robocon-red text-white p-6 rounded-lg w-5/12">
-        <h2 class="text-2xl font-bold mb-4">Red Team</h2>
-        <p class="text-xl mb-4">Score: <span id="red-score">{red}</span></p>
-        <button class="bg-white text-robocon-red px-4 py-2 rounded mr-2" data-team="red" data-points="2">+2</button>
-        <button class="bg-white text-robocon-red px-4 py-2 rounded mr-2" data-team="red" data-points="3">+3</button>
-        <button class="bg-white text-robocon-red px-4 py-2 rounded" data-team="red" data-points="7">+7</button>
+    <!-- Lower part: Teams (left and right) -->
+    <div class="w-full flex flex-col md:flex-row gap-8">
+      <!-- Left: Red Team -->
+      <div class="flex-1 text-center bg-robocon-red rounded-lg team-section">
+        <select id="red-team-name" class="bg-gray-800 text-white p-2 rounded team-select">
+          <option value="Lebron James" selected={redTeamName === 'Lebron James'}>Lebron James</option>
+          <option value="Michael Jordan" selected={redTeamName === 'Michael Jordan'}>Michael Jordan</option>
+        </select>
+        <h2 id="red-team-title" class="team-title">{redTeamName}</h2>
+        <p id="red-score" class="score-big">{red}</p>
+        <div class="score-controls">
+          <button data-team="red" data-points="2" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+2</button>
+          <button data-team="red" data-points="3" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+3</button>
+          <button data-team="red" data-points="7" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+7</button>
+        </div>
       </div>
-      
-      <!-- Blue Team -->
-      <div class="bg-robocon-blue text-white p-6 rounded-lg w-5/12">
-        <h2 class="text-2xl font-bold mb-4">Blue Team</h2>
-        <p class="text-xl mb-4">Score: <span id="blue-score">{blue}</span></p>
-        <button class="bg-white text-robocon-blue px-4 py-2 rounded mr-2" data-team="blue" data-points="2">+2</button>
-        <button class="bg-white text-robocon-blue px-4 py-2 rounded mr-2" data-team="blue" data-points="3">+3</button>
-        <button class="bg-white text-robocon-blue px-4 py-2 rounded" data-team="blue" data-points="7">+7</button>
+      <!-- Right: Blue Team -->
+      <div class="flex-1 text-center bg-robocon-blue rounded-lg team-section">
+        <select id="blue-team-name" class="bg-gray-800 text-white p-2 rounded team-select">
+          <option value="Lebron James" selected={blueTeamName === 'Lebron James'}>Lebron James</option>
+          <option value="Michael Jordan" selected={blueTeamName === 'Michael Jordan'}>Michael Jordan</option>
+        </select>
+        <h2 id="blue-team-title" class="team-title">{blueTeamName}</h2>
+        <p id="blue-score" class="score-big">{blue}</p>
+        <div class="score-controls">
+          <button data-team="blue" data-points="2" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+2</button>
+          <button data-team="blue" data-points="3" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+3</button>
+          <button data-team="blue" data-points="7" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+7</button>
+        </div>
       </div>
     </div>
 
     <!-- Match History -->
-    <div class="mt-8">
-      <h2 class="text-2xl font-bold mb-4">Match History</h2>
-      <table class="w-full border-collapse border">
+    <div class="mt-10">
+      <h2 class="text-2xl text-center mb-4">Match History</h2>
+      <table class="w-full text-left border-collapse">
         <thead>
-          <tr class="bg-gray-200">
-            <th class="border p-2">Timestamp</th>
-            <th class="border p-2">Red Score</th>
-            <th class="border p-2">Blue Score</th>
+          <tr class="bg-gray-800">
+            <th class="p-2">Timestamp</th>
+            <th class="p-2">Red Team</th>
+            <th class="p-2">Red Score</th>
+            <th class="p-2">Blue Team</th>
+            <th class="p-2">Blue Score</th>
+            <th class="p-2">Time Used</th>
+            <th class="p-2">Ended By</th>
           </tr>
         </thead>
         <tbody id="match-history">
           {matchHistory.map(record => (
-            <tr>
-              <td class="border p-2">{new Date(record.timestamp).toLocaleString()}</td>
-              <td class="border p-2">{record.redScore}</td>
-              <td class="border p-2">{record.blueScore}</td>
+            <tr class="border-b border-gray-700">
+              <td class="p-2">{new Date(record.timestamp).toLocaleString()}</td>
+              <td class="p-2">{record.redTeamName}</td>
+              <td class="p-2">{record.redScore}</td>
+              <td class="p-2">{record.blueTeamName}</td>
+              <td class="p-2">{record.blueScore}</td>
+              <td class="p-2">{record.timeUsed ? record.timeUsed : ''}</td>
+              <td class="p-2">{record.endedBy ? record.endedBy : ''}</td>
             </tr>
           ))}
         </tbody>
       </table>
-      <button id="clear-history" class="bg-red-500 text-white px-4 py-2 rounded mt-4">Clear History</button>
+      <button id="clear-history" class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Clear History</button>
     </div>
   </div>
-</div>
-<script type="module" src="/scripts/client.js"></script>
+  <script type="module" src="/scripts/client.js"></script>
 </body>
 </html>
