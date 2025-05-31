@@ -26,42 +26,6 @@ class MatchRecordClass implements MatchRecord {
     }
 }
 
-// Import the functions you need from the SDKs you need
-import { initializeApp } from "firebase/app";
-import { getDatabase, ref, set } from "firebase/database";
-// TODO: Add SDKs for Firebase products that you want to use
-// https://firebase.google.com/docs/web/setup#available-libraries
-
-// Your web app's Firebase configuration
-// For Firebase JS SDK v7.20.0 and later, measurementId is optional
-const firebaseConfig = {
-  apiKey: "AIzaSyBMuFguQPwR7dPKRgCBjJH8PgMwGs9Bhvo",
-  authDomain: "robocon-scoreboard.firebaseapp.com",
-  projectId: "robocon-scoreboard",
-  storageBucket: "robocon-scoreboard.firebasestorage.app",
-  messagingSenderId: "203120698281",
-  appId: "1:203120698281:web:8e1a96b35f37815daf9ab8",
-  measurementId: "G-JCCM98SQFK"
-};
-
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
-
-function saveMatchHistoryToDatabase(matchHistory: MatchRecord): void {
-    const db = getDatabase(app);
-    // get timestamp for match history
-    const matchRecord: MatchRecordClass = matchHistory 
-    const matchHistoryRef = ref(db, 'matchHistory/' + matchRecord.getTimestamp());
-
-    set(matchHistoryRef, matchHistory)
-        .then(() => {
-            console.log('Match history saved successfully.');
-        })
-        .catch((error) => {
-            console.error('Error saving match history:', error);
-        });
-}
-
 let redScore: number = 0;
 let blueScore: number = 0;
 let gameTime: number = 120; // Default to preliminary round (120s)
@@ -162,8 +126,9 @@ export function resetGame(): void {
   blueScore = 0;
   gameTime = initialGameDuration;
   shotClock = 20;
-  redTeamName = 'Lebron James';
-  blueTeamName = 'Michael Jordan';
+  halfCourt = 8; // Reset halfCourt to default
+  // redTeamName = 'Lebron James';
+  // blueTeamName = 'Michael Jordan';
   gameStartTimestamp = null;
 }
 
@@ -235,7 +200,6 @@ export function saveMatch(endedBy?: string): void {
     localStorage.setItem('matchHistory', JSON.stringify(matchHistory));
   }
   gameStartTimestamp = null;
-  saveMatchHistoryToDatabase(record);
 }
 
 export function getMatchHistory(): MatchRecord[] {

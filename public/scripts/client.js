@@ -7,17 +7,7 @@ import {
 
 // import { saveMatchHistoryToDatabase } from '../../src/scripts/database.ts';
 
-// Format time with milliseconds (MM:SS.mmm)
-function splitTime(seconds) {
-  const minutes = Math.floor(seconds / 60);
-  const secs = Math.floor(seconds % 60);
-  const millis = Math.floor((seconds % 1) * 1000);
-  return {
-    mmss: `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`,
-    ms: `.${millis.toString().padStart(3, '0')}`,
-  };
-}
-
+// --- State Variables ---
 let gameStarted = false;
 let updateTimer = null;
 let endedBy = null;
@@ -25,10 +15,38 @@ let initialGameDuration = 120;
 let reconfiguring = false;
 let reconfigTimer = null;
 let shotClockRunning = false;
+let passedHalfCourt = false;
 
-// Prepare the shot clock audio
+// --- Audio ---
+const whistleAudio = new Audio('src/assets/Whistle.mp3');
 const shotclockAudio = new Audio('src/assets/Shotclock.mp3');
 
+// --- Utility Functions ---
+function splitTime(seconds) {
+  const minutes = Math.floor(seconds / 60);
+  const secs = Math.floor(seconds % 60);
+  const millis = Math.floor((seconds % 1) * 100);
+  return {
+    mmssms: `${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}.${millis.toString().padStart(2, '0')}`,
+  };
+}
+
+function setShotClockLabel(label) {
+  const el = document.getElementById('shot-clock-label');
+  if (el) el.textContent = label;
+}
+
+function setAllButtonsDisabled(disabled) {
+  document.querySelectorAll('button').forEach(btn => {
+    btn.disabled = disabled;
+  });
+}
+
+function clearAllIntervals() {
+  if (updateTimer) clearInterval(updateTimer);
+}
+
+// --- UI Update Functions ---
 function updateTimers() {
   const gameTime = getGameTime();
   const shotClock = getShotClock();
@@ -36,37 +54,31 @@ function updateTimers() {
   const gameSplit = splitTime(gameTime);
   const shotSplit = splitTime(shotClock);
   const halfCourtSplit = splitTime(halfCourt);
-  document.getElementById('game-timer-mmss').textContent = gameSplit.mmss;
-  document.getElementById('game-timer-ms').textContent = gameSplit.ms;
-  document.getElementById('shot-clock-mmss').textContent = shotSplit.mmss;
-  document.getElementById('shot-clock-ms').textContent = shotSplit.ms;
-  document.getElementById('half-court-clock-mmss').textContent = halfCourtSplit.mmss;
-  document.getElementById('half-court-clock-ms').textContent = halfCourtSplit.ms;
-
-  // Play audio if needed
+  document.getElementById('game-timer-mmssms').textContent = gameSplit.mmssms;
+  document.getElementById('shot-clock-mmssms').textContent = shotSplit.mmssms;
+  document.getElementById('half-court-clock-mmssms').textContent = halfCourtSplit.mmssms;
   checkHalfCourtAudio();
+  checkShotClockAudio();
 }
 
-function checkHalfCourtAudio() {
-  if (getHalfCourt() === 0 && !window.__shotclockPlayed) {
-    shotclockAudio.currentTime = 0;
-    shotclockAudio.play();
-    window.__shotclockPlayed = true;
-  }
-  if (getHalfCourt() > 0) {
-    window.__shotclockPlayed = false;
-  }
+function updateToggleGameButton() {
+  const btn = document.getElementById('toggle-game');
+  if (!btn) return;
+  btn.textContent = gameStarted ? 'Stop Game' : 'Start Game';
+  btn.classList.toggle('bg-green-500', !gameStarted);
+  btn.classList.toggle('hover:bg-green-600', !gameStarted);
+  btn.classList.toggle('bg-red-500', gameStarted);
+  btn.classList.toggle('hover:bg-red-600', gameStarted);
 }
 
-function lockGameDuration(lock) {
-  const select = document.getElementById('game-duration');
-  if (lock) {
-    select.setAttribute('disabled', 'disabled');
-    select.classList.add('disabled');
-  } else {
-    select.removeAttribute('disabled');
-    select.classList.remove('disabled');
-  }
+function updateToggleShotButton() {
+  const btn = document.getElementById('toggle-shot');
+  if (!btn) return;
+  btn.textContent = shotClockRunning ? 'Stop Shot Clock' : 'Start Shot Clock';
+  btn.classList.toggle('bg-blue-500', !shotClockRunning);
+  btn.classList.toggle('hover:bg-blue-600', !shotClockRunning);
+  btn.classList.toggle('bg-red-500', shotClockRunning);
+  btn.classList.toggle('hover:bg-red-600', shotClockRunning);
 }
 
 function renderMatchHistory() {
@@ -82,58 +94,127 @@ function renderMatchHistory() {
       <td class="p-2">${record.redScore}</td>
       <td class="p-2">${record.blueTeamName}</td>
       <td class="p-2">${record.blueScore}</td>
-      <td class="p-2">${record.timeUsed ? record.timeUsed : ''}</td>
-      <td class="p-2">${record.endedBy ? record.endedBy : ''}</td>
+      <td class="p-2">${record.timeUsed || ''}</td>
+      <td class="p-2">${record.endedBy || ''}</td>
     `;
     tbody.appendChild(tr);
   });
 }
 
-function setShotClockLabel(label) {
-  const el = document.getElementById('shot-clock-label');
-  if (el) el.textContent = label;
-}
-
-function clearAllIntervals() {
-  if (updateTimer) clearInterval(updateTimer);
+// --- Timer Functions ---
+function startBothTimers() {
+  clearAllIntervals();
+  updateTimers();
+  updateTimer = setInterval(() => {
+    updateTimers();
+    if (getGameTime() <= 0) {
+      clearAllIntervals();
+      gameStarted = false;
+      shotClockRunning = false;
+      lockGameDuration(false);
+      renderMatchHistory();
+      updateToggleGameButton();
+      updateToggleShotButton();
+    }
+    if (getShotClock() <= 0) {
+      shotClockRunning = false;
+      updateToggleShotButton();
+    }
+  }, 10);
 }
 
 function startReconfiguration() {
-  // Stop game and shot clock
+  setAllButtonsDisabled(true);
   stopGame();
   stopShotClock();
   gameStarted = false;
   shotClockRunning = false;
   reconfiguring = true;
+  passedHalfCourt = false;
   setShotClockLabel('Reconfiguration:');
-  // Set shot clock to 10s for reconfiguration
   resetShotClock();
   setShotClock(10);
   updateTimers();
 
-  // Clear any previous reconfig timer
   if (reconfigTimer) clearInterval(reconfigTimer);
 
-  // Start reconfiguration countdown immediately
   reconfigTimer = setInterval(() => {
-    // Decrement the shot clock by 0.01s every 10ms
     setShotClock(getShotClock() - 0.01);
-    updateTimers();
     if (getShotClock() <= 0) {
       clearInterval(reconfigTimer);
       reconfiguring = false;
-      setShotClockLabel('Shot Clock:');
-      // Reset shot clock to 20s and start both timers
-      resetShotClock();
-      startGame();
-      startShotClock();
+      passedHalfCourt = false;
       gameStarted = true;
       shotClockRunning = true;
+      setAllButtonsDisabled(false);
+      setShotClockLabel('Shot Clock:');
+      resetShotClock();
+      setShotClock(20);
+      startGame();
+      startShotClock();
       startBothTimers();
+      updateToggleGameButton();
+      updateToggleShotButton();
     }
+    updateTimers();
   }, 10);
 }
 
+// --- Audio Functions ---
+function checkHalfCourtAudio() {
+  if (!passedHalfCourt && getHalfCourt() === 0 && !window.__shotclockPlayed) {
+    whistleAudio.currentTime = 0;
+    whistleAudio.play();
+    window.__shotclockPlayed = true;
+    stopGame();
+    stopShotClock();
+    gameStarted = false;
+    shotClockRunning = false;
+    resetShotClock();
+    updateTimers();
+    updateToggleGameButton();
+    updateToggleShotButton();
+  }
+  if (getHalfCourt() > 0) window.__shotclockPlayed = false;
+}
+
+function checkShotClockAudio() {
+  if (shotClockRunning && getShotClock() <= 0 && !window.__shotclockPlayed) {
+    shotclockAudio.currentTime = 0;
+    shotclockAudio.play();
+    window.__shotclockPlayed = true;
+    stopGame();
+    stopShotClock();
+    gameStarted = false;
+    shotClockRunning = false;
+    resetShotClock();
+    updateTimers();
+    updateToggleGameButton();
+    updateToggleShotButton();
+  } else if (getShotClock() > 0) {
+    window.__shotclockPlayed = false;
+  }
+}
+
+// --- Misc UI ---
+function lockGameDuration(lock) {
+  const select = document.getElementById('game-duration');
+  if (lock) {
+    select.setAttribute('disabled', 'disabled');
+    select.classList.add('disabled');
+  } else {
+    select.removeAttribute('disabled');
+    select.classList.remove('disabled');
+  }
+}
+
+// --- Keyboard Events ---
+document.addEventListener('keydown', e => {
+  if (e.key === 'e') passedHalfCourt = true;
+  if (e.key === 'E') passedHalfCourt = false;
+});
+
+// --- DOMContentLoaded: Event Listeners & Initial Render ---
 window.addEventListener('DOMContentLoaded', () => {
   // Score buttons
   document.querySelectorAll('button[data-team]').forEach(button => {
@@ -142,13 +223,12 @@ window.addEventListener('DOMContentLoaded', () => {
       const points = parseInt(button.getAttribute('data-points'));
       addScore(team, points);
       document.getElementById(`${team}-score`).textContent = getScores()[team].toString();
-      // Start reconfiguration mode after scoring
       startReconfiguration();
     });
   });
 
   // Game duration
-  document.getElementById('game-duration').addEventListener('change', (e) => {
+  document.getElementById('game-duration').addEventListener('change', e => {
     const duration = parseInt(e.target.value);
     setGameDuration(duration);
     initialGameDuration = duration;
@@ -156,7 +236,7 @@ window.addEventListener('DOMContentLoaded', () => {
   });
 
   // Team name selection
-  document.getElementById('red-team-name').addEventListener('change', (e) => {
+  document.getElementById('red-team-name').addEventListener('change', e => {
     const name = e.target.value;
     setTeamName('red', name);
     const { redTeamName, blueTeamName } = getTeamNames();
@@ -165,7 +245,7 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('blue-team-name').value = blueTeamName;
   });
 
-  document.getElementById('blue-team-name').addEventListener('change', (e) => {
+  document.getElementById('blue-team-name').addEventListener('change', e => {
     const name = e.target.value;
     setTeamName('blue', name);
     const { redTeamName, blueTeamName } = getTeamNames();
@@ -174,60 +254,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('red-team-name').value = redTeamName;
   });
 
-  // --- Accurate timer start ---
-  function startBothTimers() {
-    clearAllIntervals();
-    updateTimers();
-    updateTimer = setInterval(() => {
-      updateTimers();
-      if (getGameTime() <= 0) {
-        clearAllIntervals();
-        gameStarted = false;
-        shotClockRunning = false;
-        lockGameDuration(false);
-        renderMatchHistory();
-        updateToggleGameButton();
-        updateToggleShotButton();
-      }
-      if (getShotClock() <= 0) {
-        shotClockRunning = false;
-        updateToggleShotButton();
-      }
-    }, 10);
-  }
-
-  function updateToggleGameButton() {
-    const btn = document.getElementById('toggle-game');
-    if (!btn) return;
-    if (gameStarted) {
-      btn.textContent = 'Stop Game';
-      btn.classList.remove('bg-green-500', 'hover:bg-green-600');
-      btn.classList.add('bg-red-500', 'hover:bg-red-600');
-    } else {
-      btn.textContent = 'Start Game';
-      btn.classList.remove('bg-red-500', 'hover:bg-red-600');
-      btn.classList.add('bg-green-500', 'hover:bg-green-600');
-    }
-  }
-
-  function updateToggleShotButton() {
-    const btn = document.getElementById('toggle-shot');
-    if (!btn) return;
-    if (shotClockRunning) {
-      btn.textContent = 'Stop Shot Clock';
-      btn.classList.remove('bg-blue-500', 'hover:bg-blue-600');
-      btn.classList.add('bg-red-500', 'hover:bg-red-600');
-    } else {
-      btn.textContent = 'Start Shot Clock';
-      btn.classList.remove('bg-red-500', 'hover:bg-red-600');
-      btn.classList.add('bg-blue-500', 'hover:bg-blue-600');
-    }
-  }
-
   // Toggle Game button
   const toggleGameBtn = document.getElementById('toggle-game');
   updateToggleGameButton();
-
   toggleGameBtn.addEventListener('click', () => {
     if (!gameStarted) {
       startGame();
@@ -252,7 +281,6 @@ window.addEventListener('DOMContentLoaded', () => {
   // Toggle Shot Clock button
   const toggleShotBtn = document.getElementById('toggle-shot');
   updateToggleShotButton();
-
   toggleShotBtn.addEventListener('click', () => {
     if (!shotClockRunning) {
       startShotClock();
@@ -285,7 +313,8 @@ window.addEventListener('DOMContentLoaded', () => {
   document.getElementById('reset-game').addEventListener('click', () => {
     resetGame();
     gameStarted = false;
-    shotClockRunning = false; // Ensure shot clock is also stopped
+    passedHalfCourt = false;
+    shotClockRunning = false;
     lockGameDuration(false);
     document.getElementById('red-score').textContent = '0';
     document.getElementById('blue-score').textContent = '0';
@@ -296,13 +325,14 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('red-team-name').value = redTeamName;
     document.getElementById('blue-team-name').value = blueTeamName;
     clearAllIntervals();
-    renderMatchHistory(); // update match history table
-    updateToggleGameButton(); // Always switch to "Start Game" button
+    renderMatchHistory();
+    updateToggleGameButton();
   });
 
-  // Reset Shot Clock button (always set to 20s)
+  // Reset Shot Clock button
   document.getElementById('reset-shot').addEventListener('click', () => {
-    resetShotClock(); // always sets to 20s, even if running
+    resetShotClock();
+    passedHalfCourt = false;
     updateTimers();
   });
 

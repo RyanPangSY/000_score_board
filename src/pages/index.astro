@@ -28,6 +28,7 @@ const matchHistory = getMatchHistory();
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Scoreboard</title>
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
   <style>
     body, .font-montserrat {
       font-family: 'Montserrat', Arial, sans-serif;
@@ -37,8 +38,6 @@ const matchHistory = getMatchHistory();
       min-width: 6ch;
       text-align: right;
       letter-spacing: 0.05em;
-      /* Shift left for visual center alignment */
-      margin-right: 1.5ch;
     }
     .timer-ms {
       display: inline-block;
@@ -46,8 +45,10 @@ const matchHistory = getMatchHistory();
       text-align: left;
       font-variant-numeric: tabular-nums;
     }
-    .font-orbitron {
-      font-family: 'Orbitron', monospace, sans-serif;
+    .font-robotomono {
+      font-family: "Major Mono Display", monospace;
+      font-weight: 400;
+      font-style: normal;
     }
     .disabled {
       opacity: 0.5;
@@ -95,19 +96,22 @@ const matchHistory = getMatchHistory();
       <div class="flex flex-col items-center gap-2">
         <h2 class="text-1xl mb-0">Game Timer:</h2>
         <div class="flex flex-col items-center">
-          <p id="game-timer" class="text-6xl font-orbitron font-normal mb-2 text-center">
-            <span style="margin-right: 0ch;" class="timer-fixed" id="game-timer-mmss">{splitTime(gameTime).mmss}</span>
-            <span style="margin-right: 1ch;" class="timer-ms" id="game-timer-ms">{splitTime(gameTime).ms}</span>
+          <p id="game-timer" class="text-7xl font-robotomono font-normal text-center mb-2">
+          <strong>
+            <span style="letter-spacing: -2mm;" class="timer-fixed" id="game-timer-mmssms">{splitTime(gameTime)}</span>
+          </strong>
           </p>
-          <h3 class="text-1xl mt-4 mb-2 text-center" id="shot-clock-label">Shot Clock:</h3>
-          <p class="text-5xl font-orbitron text-center mb-2">
-            <span style="margin-right: 0ch;" class="timer-fixed" id="shot-clock-mmss">{splitTime(shotClock).mmss}</span>
-            <span style="margin-right: 1ch;" class="timer-ms" id="shot-clock-ms">{splitTime(shotClock).ms}</span>
+          <h3 class="text-1xl mt-4 mb-2" id="shot-clock-label">Shot Clock:</h3>
+          <p class="text-5xl font-robotomono text-center mb-2">
+          <strong>
+            <span style="letter-spacing: -1.5mm;" class="timer-fixed" id="shot-clock-mmssms">{splitTime(shotClock)}</span>
+          </strong>
           </p>
-          <h3 class="text-1xl mt-4 mb-2 text-center" id="shot-clock-label">8s Half Court:</h3>
-          <p class="text-3xl font-orbitron text-center mb-2">
-            <span style="margin-right: 0ch;" class="timer-fixed" id="half-court-clock-mmss">{splitTime(halfCourt).mmss}</span>
-            <span style="margin-right: 1ch;" class="timer-ms" id="half-court-clock-ms">{splitTime(halfCourt).ms}</span>
+          <h3 class="text-1xl mt-4 mb-2" id="shot-clock-label">8s Half Court:</h3>
+          <p class="text-4xl font-robotomono text-center mb-2">
+          <strong>
+            <span style="letter-spacing: -1mm;" class="timer-fixed" id="half-court-clock-mmssms">{splitTime(halfCourt)}</span>
+          </strong>
           </p>
         </div>
       </div>
@@ -192,6 +196,6 @@ const matchHistory = getMatchHistory();
       <button id="clear-history" class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Clear History</button>
     </div>
   </div>
-  <script type="module" src="/scripts/client.js"></script>
+  <script type="module" src="/000_score_board/scripts/client.js"></script>
 </body>
 </html>
