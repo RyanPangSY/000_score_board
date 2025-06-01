@@ -84,6 +84,8 @@ function updateToggleShotButton() {
 function renderMatchHistory() {
   const history = getMatchHistory();
   const tbody = document.getElementById('match-history');
+  const latestRecord = history[history.length - 1];
+  sendMatchRecordToServer(latestRecord);
   tbody.innerHTML = '';
   history.forEach(record => {
     const tr = document.createElement('tr');
@@ -348,3 +350,11 @@ window.addEventListener('DOMContentLoaded', () => {
   updateToggleShotButton();
   renderMatchHistory();
 });
+
+function sendMatchRecordToServer(record) {
+  fetch('/api/match-history', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(record),
+  });
+}

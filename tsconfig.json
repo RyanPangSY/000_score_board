@@ -5,6 +5,14 @@
     "paths": {
       "@/*": ["src/*"]
     },
-    "types": ["node"]
+    "module": "ESNext",
+    "target": "ES6",
+    "outDir": "public/scripts",
+    "moduleResolution": "bundler", // changed from "Node" to "bundler"
+    "allowJs": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true,
+    "skipLibCheck": true
   }
 }

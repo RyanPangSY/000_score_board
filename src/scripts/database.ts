@@ -10,21 +10,21 @@ interface MatchRecord {
   getTimestamp(): string;
 }
 
-class MatchRecordClass implements MatchRecord {
-  constructor(
-    private redScore: number,
-    private blueScore: number,
-    private redTeamName: string,
-    private blueTeamName: string,
-    private timestamp: string,
-    private timeUsed?: string,
-    private endedBy?: string
-  ) {}
+// class MatchRecordClass implements MatchRecord {
+//   constructor(
+//     private redScore: number,
+//     private blueScore: number,
+//     private redTeamName: string,
+//     private blueTeamName: string,
+//     private timestamp: string,
+//     private timeUsed?: string,
+//     private endedBy?: string
+//   ) {}
 
-    getTimestamp(): string {
-        return this.timestamp;
-    }
-}
+//     getTimestamp(): string {
+//         return this.timestamp;
+//     }
+// }
 
 // Import the functions you need from the SDKs you need
 import { initializeApp } from "firebase/app";
@@ -47,15 +47,15 @@ const firebaseConfig = {
 // Initialize Firebase
 const app = initializeApp(firebaseConfig);
 
-function saveMatchHistoryToDatabase(matchHistory: MatchRecord): void {
-    const db = getDatabase(app);
-    const matchHistoryRef = ref(db, 'matchHistory/' + matchHistory.);
+// function saveMatchHistoryToDatabase(matchHistory: MatchRecord): void {
+//     const db = getDatabase(app);
+//     const matchHistoryRef = ref(db, 'matchHistory/' + matchHistory.);
 
-    set(matchHistoryRef, matchHistory)
-        .then(() => {
-            console.log('Match history saved successfully.');
-        })
-        .catch((error) => {
-            console.error('Error saving match history:', error);
-        });
-}
+//     set(matchHistoryRef, matchHistory)
+//         .then(() => {
+//             console.log('Match history saved successfully.');
+//         })
+//         .catch((error) => {
+//             console.error('Error saving match history:', error);
+//         });
+// }
