@@ -56,40 +56,80 @@ const matchHistory = getMatchHistory();
     }
     .team-title {
       font-weight: bold;
-      font-size: 1.5rem;
+      font-size: 1.2rem;
       margin-bottom: 0.5rem;
     }
     .score-big {
       font-weight: bold;
-      font-size: 4.5rem;
-      margin-bottom: 1.5rem;
+      font-size: 3rem;
+      margin-bottom: 1rem;
     }
     .team-section {
       display: flex;
       flex-direction: column;
       align-items: center;
       gap: 0.5rem;
-      padding: 2rem 1rem;
+      padding: 1.2rem 0.5rem;
+      min-width: 0;
     }
     .score-controls {
-      margin-top: 1.5rem;
+      margin-top: 1rem;
       display: flex;
-      gap: 1rem;
+      gap: 0.5rem;
       justify-content: center;
+      flex-wrap: wrap;
     }
     .team-select {
       margin-bottom: 0.5rem;
+      width: 100%;
+      max-width: 200px;
+    }
+    .container {
+      padding: 0.5rem;
+      max-width: 100vw;
+    }
+    button {
+      min-width: 44px;
+      min-height: 44px;
+      font-size: 1rem;
+    }
+    table {
+      font-size: 0.95rem;
+    }
+    /* Responsive: stack teams vertically on mobile */
+    @media (max-width: 768px) {
+      .w-full.flex.md\:flex-row {
+        flex-direction: column !important;
+        gap: 1.5rem !important;
+      }
+      .team-section {
+        padding: 1rem 0.2rem;
+      }
+      .score-big {
+        font-size: 2.2rem;
+      }
+      .team-title {
+        font-size: 1rem;
+      }
+    }
+    /* Make table scrollable on mobile */
+    .match-history-table-wrapper {
+      overflow-x: auto;
+      width: 100%;
+    }
+    table {
+      min-width: 600px;
     }
     @media (min-width: 768px) {
-      .team-section {
-        padding: 2.5rem 2rem;
+      #pass-half-court {
+        display: none;
       }
     }
   </style>
 </head>
 <body class="bg-gray-900 text-white font-montserrat">
   <div class="container mx-auto p-4">
-    <h1 class="text-4xl text-center mb-8">Scoreboard</h1>
+    <h1 class="text-3xl text-center mb-6">Scoreboard</h1>
 
     <!-- Upper part: Timers and controls -->
     <div class="w-full mb-6 flex flex-col items-center">
@@ -123,6 +163,7 @@ const matchHistory = getMatchHistory();
         <button id="reset-game" class="bg-yellow-500 hover:bg-yellow-600 text-white font-bold py-2 px-4 rounded">Reset Game</button>
         <button id="toggle-shot" class="bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Start Shot Clock</button>
         <button id="reset-shot" class="bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded">Reset Shot Clock</button>
+        <button id="pass-half-court" class="bg-purple-500 hover:bg-purple-600 text-white font-bold py-2 px-4 rounded block md:hidden">Pass Half Court</button>
       </div>
       <div class="mt-4">
         <select id="game-duration" class="bg-gray-800 text-white p-2 rounded">
@@ -170,36 +211,38 @@ const matchHistory = getMatchHistory();
     <!-- Match History -->
     <div class="mt-10">
       <h2 class="text-2xl text-center mb-4">Match History</h2>
-      <table class="w-full text-left border-collapse">
-        <thead>
-          <tr class="bg-gray-800">
-            <th class="p-2">Timestamp</th>
-            <th class="p-2">Red Team</th>
-            <th class="p-2">Red Score</th>
-            <th class="p-2">Blue Team</th>
-            <th class="p-2">Blue Score</th>
-            <th class="p-2">Time Used</th>
-            <th class="p-2">Ended By</th>
-          </tr>
-        </thead>
-        <tbody id="match-history">
-          {matchHistory.map(record => (
-            <tr class="border-b border-gray-700">
-              <td class="p-2">{new Date(record.timestamp).toLocaleString()}</td>
-              <td class="p-2">{record.redTeamName}</td>
-              <td class="p-2">{record.redScore}</td>
-              <td class="p-2">{record.blueTeamName}</td>
-              <td class="p-2">{record.blueScore}</td>
-              <td class="p-2">{record.timeUsed ? record.timeUsed : ''}</td>
-              <td class="p-2">{record.endedBy ? record.endedBy : ''}</td>
+      <div class="match-history-table-wrapper">
+        <table class="w-full text-left border-collapse">
+          <thead>
+            <tr class="bg-gray-800">
+              <th class="p-2">Timestamp</th>
+              <th class="p-2">Red Team</th>
+              <th class="p-2">Red Score</th>
+              <th class="p-2">Blue Team</th>
+              <th class="p-2">Blue Score</th>
+              <th class="p-2">Time Used</th>
+              <th class="p-2">Ended By</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody id="match-history">
+            {matchHistory.map(record => (
+              <tr class="border-b border-gray-700">
+                <td class="p-2">{new Date(record.timestamp).toLocaleString()}</td>
+                <td class="p-2">{record.redTeamName}</td>
+                <td class="p-2">{record.redScore}</td>
+                <td class="p-2">{record.blueTeamName}</td>
+                <td class="p-2">{record.blueScore}</td>
+                <td class="p-2">{record.timeUsed ? record.timeUsed : ''}</td>
+                <td class="p-2">{record.endedBy ? record.endedBy : ''}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <button id="clear-history" class="mt-4 bg-red-500 hover:bg-red-600 text-white font-bold py-2 px-4 rounded">Clear History</button>
+      <button id="export-history" class="mt-4 bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded">Export CSV</button>
     </div>
-
   </div>
-  <script type="module" src="client.js"></script>
+  <script type="module" src="./client.js"></script>
 </body>
 </html>

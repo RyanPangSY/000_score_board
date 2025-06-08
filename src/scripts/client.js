@@ -123,7 +123,7 @@ function renderMatchHistory() {
   const history = getMatchHistory();
   const tbody = document.getElementById('match-history');
   const latestRecord = history[history.length - 1];
-  sendMatchRecordToServer(latestRecord);
+  // sendMatchRecordToServer(latestRecord);
   tbody.innerHTML = '';
   history.forEach(record => {
     const tr = document.createElement('tr');
@@ -357,6 +357,15 @@ window.addEventListener('DOMContentLoaded', () => {
     updateToggleShotButton();
   });
 
+  // Pass Half Court button for mobile
+  const passBtn = document.getElementById('pass-half-court');
+  if (passBtn) {
+    passBtn.addEventListener('click', () => {
+      passedHalfCourt = true;
+      updateHalfCourtStatus();
+    });
+  }
+
   // Hide old buttons if present
   ['start-game', 'stop-game', 'start-shot', 'stop-shot'].forEach(id => {
     const el = document.getElementById(id);
@@ -398,6 +407,9 @@ window.addEventListener('DOMContentLoaded', () => {
     document.getElementById('match-history').innerHTML = '';
   });
 
+  // Export match history
+  document.getElementById('export-history').addEventListener('click', exportMatchHistoryToCSV);
+
   // Initial render
   updateTimers();
   updateToggleGameButton();
@@ -412,6 +424,42 @@ function sendMatchRecordToServer(record) {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(record),
   });
+}
+
+function exportMatchHistoryToCSV() {
+  const history = getMatchHistory();
+  if (!history.length) {
+    alert('No match history to export.');
+    return;
+  }
+  const headers = [
+    'timestamp', 'redTeamName', 'redScore', 'blueTeamName', 'blueScore', 'timeUsed', 'endedBy'
+  ];
+  const csvRows = [
+    headers.join(','),
+    ...history.map(record =>
+      [
+        record.timestamp,
+        record.redTeamName,
+        record.redScore,
+        record.blueTeamName,
+        record.blueScore,
+        record.timeUsed || '',
+        record.endedBy || ''
+      ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')
+    )
+  ];
+  const csvContent = csvRows.join('\n');
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'match_history.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 
 // On first user interaction, unlock and decode audio

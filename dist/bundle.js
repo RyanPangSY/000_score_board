@@ -254,7 +254,6 @@ function renderMatchHistory() {
   const history = getMatchHistory();
   const tbody = document.getElementById("match-history");
   const latestRecord = history[history.length - 1];
-  sendMatchRecordToServer(latestRecord);
   tbody.innerHTML = "";
   history.forEach((record) => {
     const tr = document.createElement("tr");
@@ -462,6 +461,13 @@ window.addEventListener("DOMContentLoaded", () => {
     }
     updateToggleShotButton();
   });
+  const passBtn = document.getElementById("pass-half-court");
+  if (passBtn) {
+    passBtn.addEventListener("click", () => {
+      passedHalfCourt = true;
+      updateHalfCourtStatus();
+    });
+  }
   ["start-game", "stop-game", "start-shot", "stop-shot"].forEach((id) => {
     const el = document.getElementById(id);
     if (el) el.style.display = "none";
@@ -495,18 +501,52 @@ window.addEventListener("DOMContentLoaded", () => {
     clearMatchHistory();
     document.getElementById("match-history").innerHTML = "";
   });
+  document.getElementById("export-history").addEventListener("click", exportMatchHistoryToCSV);
   updateTimers();
   updateToggleGameButton();
   updateToggleShotButton();
   renderMatchHistory();
   updateHalfCourtStatus();
 });
-function sendMatchRecordToServer(record) {
-  fetch("/api/match-history", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(record)
-  });
+function exportMatchHistoryToCSV() {
+  const history = getMatchHistory();
+  if (!history.length) {
+    alert("No match history to export.");
+    return;
+  }
+  const headers = [
+    "timestamp",
+    "redTeamName",
+    "redScore",
+    "blueTeamName",
+    "blueScore",
+    "timeUsed",
+    "endedBy"
+  ];
+  const csvRows = [
+    headers.join(","),
+    ...history.map(
+      (record) => [
+        record.timestamp,
+        record.redTeamName,
+        record.redScore,
+        record.blueTeamName,
+        record.blueScore,
+        record.timeUsed || "",
+        record.endedBy || ""
+      ].map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")
+    )
+  ];
+  const csvContent = csvRows.join("\n");
+  const blob = new Blob([csvContent], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = "match_history.csv";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
 function unlockAudio() {
   whistleBuffer.play().then(() => whistleBuffer.pause());
