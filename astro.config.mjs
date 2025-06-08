@@ -13,4 +13,5 @@ export default defineConfig({
       },
     },
   },
+  base: '000_score_board',
 });
