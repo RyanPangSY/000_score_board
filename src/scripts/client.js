@@ -3,7 +3,7 @@ import {
   startGame, stopGame, resetGame, startShotClock, stopShotClock, resetShotClock,
   getMatchHistory, clearMatchHistory, getTeamNames, setTeamName, setShotClock,
   getHalfCourt, 
-} from '../../src/scripts/scoreboard.ts';
+} from './scoreboard.ts';
 
 // import { saveMatchHistoryToDatabase } from '../../src/scripts/database.ts';
 
