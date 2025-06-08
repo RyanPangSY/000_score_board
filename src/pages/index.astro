@@ -30,6 +30,9 @@ const matchHistory = getMatchHistory();
   <link href="https://fonts.googleapis.com/css?family=Montserrat:400,700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Major+Mono+Display&display=swap" rel="stylesheet">
   <style>
+    body {
+      margin: 0 10% 0 10%;
+    }
     body, .font-montserrat {
       font-family: 'Montserrat', Arial, sans-serif;
     }
@@ -98,6 +101,9 @@ const matchHistory = getMatchHistory();
     }
     /* Responsive: stack teams vertically on mobile */
     @media (max-width: 768px) {
+      main {
+        margin: 0 0 0 0;
+      }
       .w-full.flex.md\:flex-row {
         flex-direction: column !important;
         gap: 1.5rem !important;
