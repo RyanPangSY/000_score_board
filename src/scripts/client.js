@@ -28,10 +28,10 @@ async function loadAudio(url) {
 }
 
 async function setupAudio() {
-  whistleBuffer = await loadAudio('/src/assets/Whistle.mp3');
-  shotclockBuffer = await loadAudio('/src/assets/Shotclock.mp3');
-  preBeepBuffer = await loadAudio('/src/assets/Beep_1.mp3');
-  beepBuffer = await loadAudio('/src/assets/Beep_2.mp3');
+  whistleBuffer = await loadAudio('/000_score_board/assets/Whistle.mp3');
+  shotclockBuffer = await loadAudio('/000_score_board/assets/Shotclock.mp3');
+  preBeepBuffer = await loadAudio('/000_score_board/assets/Beep_1.mp3');
+  beepBuffer = await loadAudio('/000_score_board/assets/Beep_2.mp3');
 }
 setupAudio();
 
