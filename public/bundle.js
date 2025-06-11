@@ -125,7 +125,7 @@
     if (endedBy2 === "timer") {
       timeUsed = `${initialGameDuration}s`;
     } else if (endedBy2 === "reset") {
-      const used = Math.round((Date.now() - gameStartTimestamp) / 10) / 100;
+      const used = Math.round((initialGameDuration - gameTime) * 100) / 100;
       timeUsed = `${used}s`;
     }
     const record = {
@@ -550,12 +550,13 @@
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
-  function unlockAudio() {
-    whistleBuffer.play().then(() => whistleBuffer.pause());
-    shotclockBuffer.play().then(() => shotclockBuffer.pause());
-    preBeepBuffer.play().then(() => preBeepBuffer.pause());
-    beepBuffer.play().then(() => beepBuffer.pause());
-    window.removeEventListener("click", unlockAudio);
+  function unlockAudioContext() {
+    if (audioCtx.state === "suspended") {
+      audioCtx.resume();
+    }
+    window.removeEventListener("click", unlockAudioContext);
+    window.removeEventListener("keydown", unlockAudioContext);
   }
-  window.addEventListener("click", unlockAudio);
+  window.addEventListener("click", unlockAudioContext);
+  window.addEventListener("keydown", unlockAudioContext);
 })();
