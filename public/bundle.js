@@ -207,6 +207,7 @@
       btn.disabled = disabled;
     });
   }
+  document.getElementById("clear-history").disabled = true;
   function clearAllIntervals() {
     if (updateTimer) clearInterval(updateTimer);
   }
@@ -224,6 +225,8 @@
     checkShotClockAudio();
     if (reconfiguring && shotSplit.ms == "00" && shotSplit.ss != "00") {
       playBuffer(preBeepBuffer);
+    } else if (reconfiguring && shotSplit.ms == "00" && shotSplit.ss == "00") {
+      playBuffer(beepBuffer);
     } else if (gameStarted && Math.floor(gameTime2 % 60) <= 3 && gameSplit.mm == "00" && gameSplit.ms == "00" && gameSplit.ss != "00") {
       playBuffer(preBeepBuffer);
     } else if (gameStarted && gameSplit.mm == "00" && gameSplit.ms == "00" && gameSplit.ss == "00") {
@@ -376,6 +379,22 @@
       el.style.color = passedHalfCourt ? "limegreen" : "red";
     }
   }
+  var fouls = {
+    Andy: 0,
+    Philip: 0,
+    Ryan: 0,
+    Henry: 0
+  };
+  function updateFoulDisplay() {
+    ["Andy", "Philip", "Ryan", "Henry"].forEach((name) => {
+      const el = document.getElementById(`foul-count-${name}`);
+      if (el) el.textContent = fouls[name];
+    });
+  }
+  function changeFoul(name, delta) {
+    fouls[name] = Math.max(0, fouls[name] + delta);
+    updateFoulDisplay();
+  }
   document.addEventListener("keydown", (e) => {
     if (e.key === "e") {
       passedHalfCourt = true;
@@ -430,6 +449,7 @@
         endedBy = null;
         startBothTimers();
         updateToggleShotButton();
+        playBuffer(beepBuffer);
       } else {
         stopGame();
         stopShotClock();
@@ -504,11 +524,16 @@
       document.getElementById("match-history").innerHTML = "";
     });
     document.getElementById("export-history").addEventListener("click", exportMatchHistoryToCSV);
+    ["Andy", "Philip", "Ryan", "Henry"].forEach((name) => {
+      document.getElementById(`foul-minus-${name}`).addEventListener("click", () => changeFoul(name, -1));
+      document.getElementById(`foul-plus-${name}`).addEventListener("click", () => changeFoul(name, 1));
+    });
     updateTimers();
     updateToggleGameButton();
     updateToggleShotButton();
     renderMatchHistory();
     updateHalfCourtStatus();
+    updateFoulDisplay();
   });
   function exportMatchHistoryToCSV() {
     const history = getMatchHistory();
@@ -516,6 +541,23 @@
       alert("No match history to export.");
       return;
     }
+    const foulRows = [
+      ["Player", "Fouls"],
+      ...Object.entries(fouls).map(([name, count]) => [name, count])
+    ];
+    const startTime = history[0]?.timestamp;
+    const endTime = (/* @__PURE__ */ new Date()).toISOString();
+    const metaRows = [
+      [
+        `Start Time`,
+        startTime ? new Date(startTime).toLocaleString("en-US", { hour12: false }) : ""
+      ],
+      [
+        `End Time`,
+        new Date(endTime).toLocaleString("en-US", { hour12: false })
+      ],
+      []
+    ];
     const headers = [
       "timestamp",
       "redTeamName",
@@ -525,21 +567,29 @@
       "timeUsed",
       "endedBy"
     ];
-    const csvRows = [
-      headers.join(","),
+    const matchRows = [
+      headers,
       ...history.map(
         (record) => [
-          record.timestamp,
+          new Date(record.timestamp).toLocaleString("en-US", { hour12: false }),
           record.redTeamName,
           record.redScore,
           record.blueTeamName,
           record.blueScore,
           record.timeUsed || "",
           record.endedBy || ""
-        ].map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")
+        ]
       )
     ];
-    const csvContent = csvRows.join("\n");
+    const allRows = [
+      ...metaRows,
+      ["Foul Statistics"],
+      ...foulRows,
+      [],
+      ["Match History"],
+      ...matchRows
+    ];
+    const csvContent = allRows.map((row) => row.map((val) => `"${String(val).replace(/"/g, '""')}"`).join(",")).join("\n");
     const blob = new Blob([csvContent], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -559,4 +609,11 @@
   }
   window.addEventListener("click", unlockAudioContext);
   window.addEventListener("keydown", unlockAudioContext);
+  window.addEventListener("beforeunload", function(e) {
+    if (getMatchHistory().length > 0) {
+      e.preventDefault();
+      e.returnValue = "You have unsaved data. Are you sure you want to leave?";
+      return "You have unsaved data. Are you sure you want to leave?";
+    }
+  });
 })();

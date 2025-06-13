@@ -117,6 +117,7 @@ const matchHistory = getMatchHistory();
       .team-title {
         font-size: 1rem;
       }
+
     }
     /* Make table scrollable on mobile */
     .match-history-table-wrapper {
@@ -197,6 +198,25 @@ const matchHistory = getMatchHistory();
           <button data-team="red" data-points="3" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+3</button>
           <button data-team="red" data-points="7" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+7</button>
         </div>
+        <!-- 犯規區塊：橫向排列 -->
+        <div class="foul-section mt-8 mb-2 flex flex-row justify-center gap-12">
+          <div class="flex flex-col items-center">
+            <span class="font-bold mb-2">Andy</span>
+            <div>
+              <button id="foul-minus-Andy" class="bg-gray-700 px-2 rounded">-1</button>
+              <span id="foul-count-Andy" class="ml-2 mr-2 text-2xl font-robotomono font-normal">0</span>
+              <button id="foul-plus-Andy" class="bg-gray-700 px-2 rounded">+1</button>
+            </div>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="font-bold mb-2">Philip</span>
+            <div>
+              <button id="foul-minus-Philip" class="bg-gray-700 px-2 rounded">-1</button>
+              <span id="foul-count-Philip" class="ml-2 mr-2 text-2xl font-robotomono font-normal">0</span>
+              <button id="foul-plus-Philip" class="bg-gray-700 px-2 rounded">+1</button>
+            </div>
+          </div>
+        </div>
       </div>
       <!-- Right: Blue Team -->
       <div class="flex-1 text-center bg-robocon-blue rounded-lg team-section">
@@ -211,9 +231,28 @@ const matchHistory = getMatchHistory();
           <button data-team="blue" data-points="3" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+3</button>
           <button data-team="blue" data-points="7" class="bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded">+7</button>
         </div>
+        <!-- 犯規區塊：橫向排列 -->
+        <div class="foul-section mt-8 mb-2 flex flex-row justify-center gap-12">
+          <div class="flex flex-col items-center">
+            <span class="font-bold mb-2">Ryan</span>
+            <div>
+              <button id="foul-minus-Ryan" class="bg-gray-700 px-2 rounded">-1</button>
+              <span id="foul-count-Ryan" class="ml-2 mr-2 text-2xl font-robotomono font-normal">0</span>
+              <button id="foul-plus-Ryan" class="bg-gray-700 px-2 rounded">+1</button>
+            </div>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="font-bold mb-2">Henry</span>
+            <div>
+              <button id="foul-minus-Henry" class="bg-gray-700 px-2 rounded">-1</button>
+              <span id="foul-count-Henry" class="ml-2 mr-2 text-2xl font-robotomono font-normal">0</span>
+              <button id="foul-plus-Henry" class="bg-gray-700 px-2 rounded">+1</button>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
-
+    
     <!-- Match History -->
     <div class="mt-10">
       <h2 class="text-2xl text-center mb-4">Match History</h2>
