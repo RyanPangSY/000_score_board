@@ -1,3 +1,11 @@
+// Bundle: src/scripts/client.js
+// This file is part of the Scoreboard project.
+// It is licensed under the GNU General Public License v3.0.
+
+// Bundling commands:
+
+
+import { set } from 'firebase/database';
 import {
   addScore, getScores, setGameDuration, getGameTime, getShotClock,
   startGame, stopGame, resetGame, startShotClock, stopShotClock, resetShotClock,
@@ -19,7 +27,7 @@ let passedHalfCourt = false;
 
 // --- Audio ---
 let audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-let whistleBuffer, shotclockBuffer, preBeepBuffer, beepBuffer;
+let whistleBuffer, shotclockBuffer, preBeepBuffer, beepBuffer, introBuffer; // add introBuffer
 
 async function loadAudio(url) {
   const response = await fetch(url);
@@ -32,6 +40,7 @@ async function setupAudio() {
   shotclockBuffer = await loadAudio('/000_score_board/assets/Shotclock.mp3');
   preBeepBuffer = await loadAudio('/000_score_board/assets/Beep_1.mp3');
   beepBuffer = await loadAudio('/000_score_board/assets/Beep_2.mp3');
+  introBuffer = await loadAudio('/000_score_board/assets/Intro.mp3'); // load intro
 }
 setupAudio();
 
@@ -406,10 +415,19 @@ window.addEventListener('DOMContentLoaded', () => {
     clearMatchHistory();
     document.getElementById('match-history').innerHTML = '';
   });
-
+  
   // Export match history
   document.getElementById('export-history').addEventListener('click', exportMatchHistoryToCSV);
-
+  
+  // Only trigger animation on first click
+  const introOverlay = document.getElementById('intro-overlay');
+  if (introOverlay) {
+    introOverlay.addEventListener('click', function handleIntroClick() {
+      loadAnimation();
+      introOverlay.removeEventListener('click', handleIntroClick);
+    });
+  }
+  
   // Initial render
   updateTimers();
   updateToggleGameButton();
@@ -426,6 +444,30 @@ function sendMatchRecordToServer(record) {
   });
 }
 
+// Update loadAnimation to fade out and remove the overlay after animation
+function loadAnimation() {
+  const intro = document.getElementById('intro-overlay');
+  const introText = document.getElementById('intro-text');
+  if (intro && introText) {
+    // Only now, set the animation property
+    void introText.offsetWidth; // force reflow
+    introText.style.animation =
+      'introTextFadeIn 0.4s 1s cubic-bezier(.4,0,.6,1) forwards, ' +
+      'introTextShadow 1.6s 0.5s cubic-bezier(.4,0,.6,1) forwards';
+
+    setTimeout(() => {
+      playBuffer(introBuffer);
+    }, 600);
+
+    setTimeout(() => {
+      intro.classList.add('fade-out');
+      setTimeout(() => {
+        intro.remove();
+      }, 800);
+    }, 4000);
+  }
+}
+
 function exportMatchHistoryToCSV() {
   const history = getMatchHistory();
   if (!history.length) {
@@ -439,7 +481,8 @@ function exportMatchHistoryToCSV() {
     headers.join(','),
     ...history.map(record =>
       [
-        record.timestamp,
+        // Convert to local time string
+        new Date(record.timestamp).toLocaleString('en-GB', { hour12: false }),
         record.redTeamName,
         record.redScore,
         record.blueTeamName,
@@ -449,7 +492,7 @@ function exportMatchHistoryToCSV() {
       ].map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')
     )
   ];
-  const csvContent = csvRows.join('\n');
+  const csvContent = '\uFEFF' + csvRows.join('\n'); // Add BOM for UTF-8
   const blob = new Blob([csvContent], { type: 'text/csv' });
   const url = URL.createObjectURL(blob);
 
@@ -462,12 +505,13 @@ function exportMatchHistoryToCSV() {
   URL.revokeObjectURL(url);
 }
 
-// On first user interaction, unlock and decode audio
-function unlockAudio() {
-  whistleBuffer.play().then(() => whistleBuffer.pause());
-  shotclockBuffer.play().then(() => shotclockBuffer.pause());
-  preBeepBuffer.play().then(() => preBeepBuffer.pause());
-  beepBuffer.play().then(() => beepBuffer.pause());
-  window.removeEventListener('click', unlockAudio);
+// Unlock audio context on user interaction
+function unlockAudioContext() {
+  if (audioCtx.state === 'suspended') {
+    audioCtx.resume();
+  }
+  window.removeEventListener('click', unlockAudioContext);
+  window.removeEventListener('keydown', unlockAudioContext);
 }
-window.addEventListener('click', unlockAudio);
+window.addEventListener('click', unlockAudioContext);
+window.addEventListener('keydown', unlockAudioContext);

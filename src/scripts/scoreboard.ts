@@ -180,7 +180,7 @@ export function saveMatch(endedBy?: string): void {
   if (endedBy === 'timer') {
     timeUsed = `${initialGameDuration}s`;
   } else if (endedBy === 'reset') {
-    const used = Math.round((Date.now() - gameStartTimestamp) / 10) / 100;
+    const used = Math.round((initialGameDuration - gameTime) * 100) / 100;
     timeUsed = `${used}s`;
   }
   const record: MatchRecord = {
