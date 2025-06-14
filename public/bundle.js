@@ -165,6 +165,7 @@
   var reconfigTimer = null;
   var shotClockRunning = false;
   var passedHalfCourt = false;
+  var isFreshStart = true;
   var audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   var whistleBuffer;
   var shotclockBuffer;
@@ -207,7 +208,6 @@
       btn.disabled = disabled;
     });
   }
-  document.getElementById("clear-history").disabled = true;
   function clearAllIntervals() {
     if (updateTimer) clearInterval(updateTimer);
   }
@@ -278,6 +278,10 @@
   function startBothTimers() {
     clearAllIntervals();
     updateTimers();
+    if (isFreshStart) {
+      isFreshStart = false;
+      startCountdown(10);
+    }
     updateTimer = setInterval(() => {
       updateTimers();
       if (getGameTime() <= 0) {
@@ -293,6 +297,40 @@
         shotClockRunning = false;
         updateToggleShotButton();
       }
+    }, 10);
+  }
+  function startCountdown(time) {
+    setAllButtonsDisabled(true);
+    stopGame();
+    stopShotClock();
+    gameStarted = false;
+    shotClockRunning = false;
+    reconfiguring = true;
+    passedHalfCourt = false;
+    updateHalfCourtStatus();
+    setShotClockLabel("Countdown:");
+    resetShotClock();
+    setShotClock(time);
+    updateTimers();
+    if (reconfigTimer) clearInterval(reconfigTimer);
+    reconfigTimer = setInterval(() => {
+      setShotClock(getShotClock() - 0.01);
+      if (getShotClock() <= 0) {
+        clearInterval(reconfigTimer);
+        reconfiguring = false;
+        gameStarted = true;
+        shotClockRunning = true;
+        setAllButtonsDisabled(false);
+        setShotClockLabel("Shot Clock:");
+        resetShotClock();
+        setShotClock(20);
+        startGame();
+        startShotClock();
+        startBothTimers();
+        updateToggleGameButton();
+        updateToggleShotButton();
+      }
+      updateTimers();
     }, 10);
   }
   function startReconfiguration() {
@@ -449,7 +487,6 @@
         endedBy = null;
         startBothTimers();
         updateToggleShotButton();
-        playBuffer(beepBuffer);
       } else {
         stopGame();
         stopShotClock();
@@ -499,6 +536,7 @@
       gameStarted = false;
       shotClockRunning = false;
       passedHalfCourt = false;
+      isFreshStart = true;
       updateHalfCourtStatus();
       lockGameDuration(false);
       document.getElementById("red-score").textContent = "0";
@@ -520,8 +558,10 @@
       updateTimers();
     });
     document.getElementById("clear-history").addEventListener("click", () => {
-      clearMatchHistory();
-      document.getElementById("match-history").innerHTML = "";
+      if (window.confirm("You have unsaved data. Are you sure you want to clear the match history?")) {
+        clearMatchHistory();
+        renderMatchHistory();
+      }
     });
     document.getElementById("export-history").addEventListener("click", exportMatchHistoryToCSV);
     ["Andy", "Philip", "Ryan", "Henry"].forEach((name) => {
