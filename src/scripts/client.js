@@ -182,7 +182,7 @@ function startCountdown(time) {
   updateHalfCourtStatus()
   setShotClockLabel('Countdown:');
   resetShotClock();
-  setShotClock(time);
+  setShotClock(countdownTimeSetting); // Use setting
   updateTimers();
 
   if (reconfigTimer) clearInterval(reconfigTimer);
@@ -219,7 +219,7 @@ function startReconfiguration() {
   updateHalfCourtStatus()
   setShotClockLabel('Reconfiguration:');
   resetShotClock();
-  setShotClock(10);
+  setShotClock(reconfigTimeSetting); // Use setting
   updateTimers();
 
   if (reconfigTimer) clearInterval(reconfigTimer);
@@ -321,7 +321,42 @@ function changeFoul(name, delta) {
   updateFoulDisplay();
 }
 
-// --- Keyboard Events ---
+// --- Settings Modal State ---
+let countdownTimeSetting = 10;
+let reconfigTimeSetting = 10;
+
+// --- Settings Modal Logic ---
+function showSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  modal.classList.add('visible');
+  modal.classList.remove('hidden');
+  // Set current values
+  document.getElementById('countdown-time-input').value = countdownTimeSetting;
+  document.getElementById('reconfig-time-input').value = reconfigTimeSetting;
+  // Focus first input
+  document.getElementById('countdown-time-input').focus();
+}
+function hideSettingsModal() {
+  const modal = document.getElementById('settings-modal');
+  modal.classList.remove('visible');
+  setTimeout(() => modal.classList.add('hidden'), 300);
+}
+
+// --- ESC key to toggle settings modal ---
+let settingsOpen = false;
+document.addEventListener('keydown', e => {
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('settings-modal');
+    if (!settingsOpen) {
+      showSettingsModal();
+      settingsOpen = true;
+    } else {
+      hideSettingsModal();
+      settingsOpen = false;
+    }
+  }
+});
+
 document.addEventListener('keydown', e => {
   if (e.key === 'e') {
     passedHalfCourt = true;
@@ -333,7 +368,7 @@ document.addEventListener('keydown', e => {
   }
 });
 
-// --- DOMContentLoaded: Event Listeners & Initial Render ---
+// --- Modal button handlers ---
 window.addEventListener('DOMContentLoaded', () => {
   // Score buttons
   document.querySelectorAll('button[data-team]').forEach(button => {
@@ -468,6 +503,17 @@ window.addEventListener('DOMContentLoaded', () => {
     updateTimers();
   });
 
+  // Settings button
+  document.getElementById('settings').addEventListener('click', () => {
+    if (!settingsOpen) {
+      showSettingsModal();
+      settingsOpen = true;
+    } else {
+      hideSettingsModal();
+      settingsOpen = false;
+    }
+  });
+
   // Clear match history
   document.getElementById('clear-history').addEventListener('click', () => {
     if (window.confirm('You have unsaved data. Are you sure you want to clear the match history?')) {
@@ -483,6 +529,26 @@ window.addEventListener('DOMContentLoaded', () => {
   ['Andy', 'Philip', 'Ryan', 'Henry'].forEach(name => {
     document.getElementById(`foul-minus-${name}`).addEventListener('click', () => changeFoul(name, -1));
     document.getElementById(`foul-plus-${name}`).addEventListener('click', () => changeFoul(name, 1));
+  });
+
+  // Settings Save
+  document.getElementById('settings-save').addEventListener('click', () => {
+    const countdownVal = parseInt(document.getElementById('countdown-time-input').value, 10);
+    const reconfigVal = parseInt(document.getElementById('reconfig-time-input').value, 10);
+    if (Number.isInteger(countdownVal) && countdownVal > 0) {
+      countdownTimeSetting = countdownVal;
+    }
+    if (Number.isInteger(reconfigVal) && reconfigVal > 0) {
+      reconfigTimeSetting = reconfigVal;
+    }
+    hideSettingsModal();
+    settingsOpen = false;
+  });
+
+  // Settings Cancel
+  document.getElementById('settings-cancel').addEventListener('click', () => {
+    hideSettingsModal();
+    settingsOpen = false;
   });
 
   // Initial render

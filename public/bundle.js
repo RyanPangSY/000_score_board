@@ -310,7 +310,7 @@
     updateHalfCourtStatus();
     setShotClockLabel("Countdown:");
     resetShotClock();
-    setShotClock(time);
+    setShotClock(countdownTimeSetting);
     updateTimers();
     if (reconfigTimer) clearInterval(reconfigTimer);
     reconfigTimer = setInterval(() => {
@@ -344,7 +344,7 @@
     updateHalfCourtStatus();
     setShotClockLabel("Reconfiguration:");
     resetShotClock();
-    setShotClock(10);
+    setShotClock(reconfigTimeSetting);
     updateTimers();
     if (reconfigTimer) clearInterval(reconfigTimer);
     reconfigTimer = setInterval(() => {
@@ -433,6 +433,34 @@
     fouls[name] = Math.max(0, fouls[name] + delta);
     updateFoulDisplay();
   }
+  var countdownTimeSetting = 10;
+  var reconfigTimeSetting = 10;
+  function showSettingsModal() {
+    const modal = document.getElementById("settings-modal");
+    modal.classList.add("visible");
+    modal.classList.remove("hidden");
+    document.getElementById("countdown-time-input").value = countdownTimeSetting;
+    document.getElementById("reconfig-time-input").value = reconfigTimeSetting;
+    document.getElementById("countdown-time-input").focus();
+  }
+  function hideSettingsModal() {
+    const modal = document.getElementById("settings-modal");
+    modal.classList.remove("visible");
+    setTimeout(() => modal.classList.add("hidden"), 300);
+  }
+  var settingsOpen = false;
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      const modal = document.getElementById("settings-modal");
+      if (!settingsOpen) {
+        showSettingsModal();
+        settingsOpen = true;
+      } else {
+        hideSettingsModal();
+        settingsOpen = false;
+      }
+    }
+  });
   document.addEventListener("keydown", (e) => {
     if (e.key === "e") {
       passedHalfCourt = true;
@@ -557,6 +585,15 @@
       updateHalfCourtStatus();
       updateTimers();
     });
+    document.getElementById("settings").addEventListener("click", () => {
+      if (!settingsOpen) {
+        showSettingsModal();
+        settingsOpen = true;
+      } else {
+        hideSettingsModal();
+        settingsOpen = false;
+      }
+    });
     document.getElementById("clear-history").addEventListener("click", () => {
       if (window.confirm("You have unsaved data. Are you sure you want to clear the match history?")) {
         clearMatchHistory();
@@ -567,6 +604,22 @@
     ["Andy", "Philip", "Ryan", "Henry"].forEach((name) => {
       document.getElementById(`foul-minus-${name}`).addEventListener("click", () => changeFoul(name, -1));
       document.getElementById(`foul-plus-${name}`).addEventListener("click", () => changeFoul(name, 1));
+    });
+    document.getElementById("settings-save").addEventListener("click", () => {
+      const countdownVal = parseInt(document.getElementById("countdown-time-input").value, 10);
+      const reconfigVal = parseInt(document.getElementById("reconfig-time-input").value, 10);
+      if (Number.isInteger(countdownVal) && countdownVal > 0) {
+        countdownTimeSetting = countdownVal;
+      }
+      if (Number.isInteger(reconfigVal) && reconfigVal > 0) {
+        reconfigTimeSetting = reconfigVal;
+      }
+      hideSettingsModal();
+      settingsOpen = false;
+    });
+    document.getElementById("settings-cancel").addEventListener("click", () => {
+      hideSettingsModal();
+      settingsOpen = false;
     });
     updateTimers();
     updateToggleGameButton();
