@@ -23,4 +23,8 @@ pnpm-debug.log*
 # jetbrains setting folder
 .idea/
 
+# unnecessary files
 screenshots/
+src/scripts/database.ts
+server.js
+.github/
